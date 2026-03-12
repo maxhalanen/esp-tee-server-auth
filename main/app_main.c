@@ -266,7 +266,11 @@ static void handle_client(int sock)
         memcpy(response + 1, resp_mac.bytes, SERVER_AUTH_MAC_LEN);
         send(sock, response, sizeof(response), 0);
 
-        ESP_LOGI(TAG, result_byte ? "STATUS MATCH" : "STATUS MISMATCH");
+        if (result_byte) {
+            ESP_LOGI(TAG, "STATUS MATCH");
+        } else {
+            ESP_LOGW(TAG, "STATUS MISMATCH");
+        }
         return;
     }
 
