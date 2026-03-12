@@ -3,5 +3,9 @@ secure_services:
     entries:
       - id: 200
         type: custom
-        function: server_auth_verify_cmd
+        function: server_auth_verify_mac
         args: 3
+      - id: 201
+        type: custom
+        function: server_auth_compute_mac
+        args: 2

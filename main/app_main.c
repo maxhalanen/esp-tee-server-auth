@@ -1,23 +1,22 @@
 /*
- * ESP TEE Server Authentication Demo
+ * ESP TEE Server Authentication Demo — Symmetric HMAC-SHA256
  *
- * The device runs a TCP server. Before executing any command it issues a
- * challenge: a fresh 32-byte random nonce sent to the connecting server.
- * The server must sign SHA-256(nonce || command_byte) with its ECDSA-P256
- * private key. The device verifies the signature inside the TEE using the
- * server's public key, which is hardcoded in M-mode and never exposed to
- * the REE. An attacker controlling the REE cannot substitute a different key.
+ * The device runs a TCP server. The server authenticates itself by sending an
+ * HMAC-SHA256 MAC computed with the shared secret key. The device verifies
+ * the MAC inside the TEE (shared key never exposed to REE), then compares the
+ * server's expected LED state against the actual GPIO level.
  *
- * The device auto-blinks an LED. The server signs an expected LED state and
- * sends it; the device verifies the signature inside the TEE then compares
- * the expected state against the actual GPIO level.
+ * The device also MACs its response, enabling the server to verify the reply
+ * came from a genuine device — mutual authentication.
  *
  * Protocol (one connection per exchange):
  *   CMD_GET_CHALLENGE (0x00) — device responds with 32-byte random nonce
- *   CMD_CHECK_STATUS  (0x01) — server sends signed expected state:
- *                              [0x01][1B expected][32B nonce][64B sig]
- *                              sig covers SHA-256(nonce || expected_state)
- *                              device responds: MATCH or MISMATCH
+ *   CMD_CHECK_STATUS  (0x01) — server sends:
+ *                              [0x01][1B expected_state][32B nonce][32B MAC]
+ *                              MAC = HMAC-SHA256(nonce || expected_state, key)
+ *                              device responds: [1B result][32B MAC]
+ *                              result: 0x01 = MATCH, 0x00 = MISMATCH
+ *                              MAC = HMAC-SHA256(nonce || result, key)
  *
  * The nonce is single-use: accepted once then invalidated to prevent replay.
  *
@@ -45,7 +44,6 @@
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 
-#include "psa/crypto.h"
 #include "esp_tee.h"
 #include "secure_service_num.h"
 #include "server_auth_service.h"
@@ -63,7 +61,7 @@
 #define CMD_GET_CHALLENGE  0x00
 #define CMD_CHECK_STATUS   0x01
 
-#define NONCE_LEN       32
+#define NONCE_LEN       SERVER_AUTH_NONCE_LEN
 #define BLINK_PERIOD_MS CONFIG_EXAMPLE_BLINK_PERIOD_MS
 
 static const char *TAG = "tee_server_auth";
@@ -163,45 +161,12 @@ static void led_blink_task(void *pvParameters)
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Verify a signed status check in the TEE                                   */
-/*                                                                             */
-/*  Signed message = SHA-256(nonce || expected_state)                         */
-/*  Verification uses the server pubkey hardcoded in M-mode.                  */
-/* -------------------------------------------------------------------------- */
-static bool verify_signed_command(uint8_t expected_state, const uint8_t *nonce,
-                                  const server_auth_sig_t *sig)
-{
-    /* Build the message: nonce || expected_state */
-    uint8_t msg[NONCE_LEN + 1];
-    memcpy(msg, nonce, NONCE_LEN);
-    msg[NONCE_LEN] = expected_state;
-
-    /* Hash in the REE — the message content is not secret */
-    uint8_t hash[SERVER_AUTH_HASH_LEN];
-    size_t hash_len = 0;
-    psa_hash_compute(PSA_ALG_SHA_256, msg, sizeof(msg),
-                     hash, sizeof(hash), &hash_len);
-
-    /* Verify inside the TEE — server pubkey never leaves M-mode */
-    int valid = 0;
-    uint32_t ret = esp_tee_service_call_with_noniram_intr_disabled(
-        4, SS_SERVER_AUTH_VERIFY_CMD, hash, sig, &valid);
-
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "TEE service call failed: 0x%lx", (unsigned long)ret);
-        return false;
-    }
-
-    return (valid == 1);
-}
-
-/* -------------------------------------------------------------------------- */
 /*  Handle a single TCP client connection                                      */
 /* -------------------------------------------------------------------------- */
 static void handle_client(int sock)
 {
-    /* Largest packet: CMD_CHECK_STATUS = [cmd][expected][nonce][sig] */
-    uint8_t rx_buf[1 + 1 + NONCE_LEN + SERVER_AUTH_SIG_LEN];
+    /* Largest packet: CMD_CHECK_STATUS = [cmd][expected][nonce][MAC] */
+    uint8_t rx_buf[1 + 1 + NONCE_LEN + SERVER_AUTH_MAC_LEN];
 
     int len = recv(sock, rx_buf, sizeof(rx_buf), 0);
     if (len <= 0) {
@@ -221,8 +186,8 @@ static void handle_client(int sock)
     }
 
     if (cmd == CMD_CHECK_STATUS) {
-        /* Packet: [0x01][1B expected_state][32B nonce][64B sig] */
-        if (len < 1 + 1 + NONCE_LEN + SERVER_AUTH_SIG_LEN) {
+        /* Packet: [0x01][1B expected_state][32B nonce][32B MAC] */
+        if (len < 1 + 1 + NONCE_LEN + SERVER_AUTH_MAC_LEN) {
             ESP_LOGW(TAG, "CHECK_STATUS packet too short (%d bytes)", len);
             send(sock, "ERROR: too short\n", 17, 0);
             return;
@@ -234,10 +199,10 @@ static void handle_client(int sock)
             return;
         }
 
-        uint8_t expected_state = rx_buf[1];
-        const uint8_t *nonce   = &rx_buf[2];
+        uint8_t expected_state   = rx_buf[1];
+        const uint8_t *rx_nonce  = &rx_buf[2];
 
-        if (memcmp(nonce, s_pending_nonce, NONCE_LEN) != 0) {
+        if (memcmp(rx_nonce, s_pending_nonce, NONCE_LEN) != 0) {
             ESP_LOGW(TAG, "Nonce mismatch — possible replay");
             s_nonce_valid = false;
             send(sock, "ERROR: nonce mismatch\n", 22, 0);
@@ -247,28 +212,61 @@ static void handle_client(int sock)
         /* Consume nonce immediately */
         s_nonce_valid = false;
 
-        server_auth_sig_t sig;
-        memcpy(sig.rs, &rx_buf[2 + NONCE_LEN], SERVER_AUTH_SIG_LEN);
+        /* Build verify message: nonce || expected_state */
+        uint8_t verify_msg[SERVER_AUTH_MSG_LEN];
+        memcpy(verify_msg, s_pending_nonce, NONCE_LEN);
+        verify_msg[NONCE_LEN] = expected_state;
 
-        if (!verify_signed_command(expected_state, nonce, &sig)) {
-            ESP_LOGW(TAG, "CHECK_STATUS REJECTED — invalid server signature");
+        server_auth_mac_t mac;
+        memcpy(mac.bytes, &rx_buf[2 + NONCE_LEN], SERVER_AUTH_MAC_LEN);
+
+        /* Verify server MAC inside the TEE — shared key never leaves M-mode */
+        int valid = 0;
+        uint32_t ret = esp_tee_service_call_with_noniram_intr_disabled(
+            4, SS_SERVER_AUTH_VERIFY_MAC, verify_msg, &mac, &valid);
+
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "TEE verify service call failed: 0x%lx", (unsigned long)ret);
+            send(sock, "ERROR: tee fault\n", 17, 0);
+            return;
+        }
+
+        if (!valid) {
+            ESP_LOGW(TAG, "CHECK_STATUS REJECTED — invalid server MAC");
             send(sock, "ERROR: auth failed\n", 19, 0);
             return;
         }
 
-        /* Signature valid — compare expected vs actual LED state */
+        /* MAC valid — compare expected vs actual LED state */
         int actual = atomic_load(&s_led_state);
         ESP_LOGI(TAG, "Server expects LED: %s | Actual LED: %s",
                  expected_state ? "ON" : "OFF",
                  actual         ? "ON" : "OFF");
 
-        if ((expected_state != 0) == (actual != 0)) {
-            ESP_LOGI(TAG, "STATUS MATCH");
-            send(sock, "MATCH\n", 6, 0);
-        } else {
-            ESP_LOGW(TAG, "STATUS MISMATCH");
-            send(sock, "MISMATCH\n", 9, 0);
+        uint8_t result_byte = ((expected_state != 0) == (actual != 0)) ? 0x01 : 0x00;
+
+        /* Compute response MAC inside the TEE — proves response is from this device */
+        uint8_t resp_msg[SERVER_AUTH_MSG_LEN];
+        memcpy(resp_msg, s_pending_nonce, NONCE_LEN);
+        resp_msg[NONCE_LEN] = result_byte;
+
+        server_auth_mac_t resp_mac;
+        uint32_t ret2 = esp_tee_service_call_with_noniram_intr_disabled(
+            3, SS_SERVER_AUTH_COMPUTE_MAC, resp_msg, &resp_mac);
+
+        if (ret2 != ESP_OK) {
+            ESP_LOGE(TAG, "TEE compute service call failed: 0x%lx", (unsigned long)ret2);
+            send(sock, "ERROR: tee fault\n", 17, 0);
+            return;
         }
+
+        /* Send [result_byte][32B MAC] */
+        uint8_t response[1 + SERVER_AUTH_MAC_LEN];
+        response[0] = result_byte;
+        memcpy(response + 1, resp_mac.bytes, SERVER_AUTH_MAC_LEN);
+        send(sock, response, sizeof(response), 0);
+
+        ESP_LOGI(TAG, result_byte ? "STATUS MATCH" : "STATUS MISMATCH");
         return;
     }
 
@@ -330,7 +328,7 @@ static void tcp_server_task(void *pvParameters)
 /* -------------------------------------------------------------------------- */
 void app_main(void)
 {
-    ESP_LOGI(TAG, "=== ESP TEE Server Authentication Demo ===");
+    ESP_LOGI(TAG, "=== ESP TEE Server Authentication Demo (Symmetric HMAC) ===");
 
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -338,9 +336,6 @@ void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
-
-    /* PSA crypto needed for SHA-256 hashing in the REE */
-    psa_crypto_init();
 
     /* Set up LED GPIO */
     gpio_reset_pin(LED_GPIO);
