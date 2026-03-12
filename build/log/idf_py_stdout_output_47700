@@ -1,0 +1,348 @@
+Command: /home/max/.espressif/python_env/idf6.1_py3.12_env/bin/python /home/max/esp/esp-idf/tools/idf_monitor.py -p /dev/ttyACM0 -b 115200 --toolchain-prefix riscv32-esp-elf- --target esp32c6 --revision 0 --decode-panic backtrace /home/max/esp/tee_server_auth/build/tee_server_auth.elf /home/max/esp/tee_server_auth/build/bootloader/bootloader.elf /home/max/esp/tee_server_auth/build/esp_tee/esp_tee.elf -m '/home/max/.espressif/python_env/idf6.1_py3.12_env/bin/python' '/home/max/esp/esp-idf/tools/idf.py'
+ESP-ROM:esp32c6-20220919
+Build:Sep 19 2022
+rst:0x15 (USB_UART_HPSYS),boot:0x6f (SPI_FAST_FLASH_BOOT)
+Saved PC:0x400228ee
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x40875830,len:0x195c
+load:0x4086b910,len:0xe24
+load:0x4086e610,len:0x389c
+entry 0x4086b91a
+[0;32mI (23) boot: ESP-IDF v6.1-dev-2210-gf621cc4fff 2nd stage bootloader[0m
+[0;32mI (24) boot: compile time Mar 12 2026 09:26:49[0m
+[0;32mI (25) boot: chip revision: v0.2[0m
+[0;32mI (25) boot: efuse block revision: v0.3[0m
+[0;32mI (28) boot.esp32c6: SPI Speed      : 80MHz[0m
+[0;32mI (32) boot.esp32c6: SPI Mode       : DIO[0m
+[0;32mI (36) boot.esp32c6: SPI Flash Size : 2MB[0m
+[0;32mI (39) boot: Enabling RNG early entropy source...[0m
+[0;32mI (44) boot: Partition Table:[0m
+[0;32mI (47) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (53) boot:  0 tee              TEE app          00 30 00010000 00030000[0m
+[0;32mI (59) boot:  1 secure_storage   WiFi data        01 02 00040000 00010000[0m
+[0;32mI (66) boot:  2 factory          factory app      00 00 00050000 00180000[0m
+[0;32mI (72) boot:  3 nvs              WiFi data        01 02 001d0000 00006000[0m
+[0;32mI (79) boot:  4 phy_init         RF data          01 01 001d6000 00001000[0m
+[0;32mI (86) boot: End of partition table[0m
+[0;32mI (89) esp_image: segment 0: paddr=00010020 vaddr=42000020 size=046b0h ( 18096) map[0m
+[0;32mI (100) esp_image: segment 1: paddr=000146d8 vaddr=40800000 size=03940h ( 14656) load[0m
+[0;32mI (107) esp_image: segment 2: paddr=00018020 vaddr=42008020 size=16c5ch ( 93276) map[0m
+[0;32mI (128) esp_image: segment 3: paddr=0002ec84 vaddr=40803940 size=02544h (  9540) load[0m
+[0;32mI (131) esp_image: segment 4: paddr=000311d0 vaddr=40806850 size=00e7ch (  3708) load[0m
+[0;32mI (135) boot: Loaded TEE app from partition at offset 0x10000[0m
+[0;32mI (138) esp_image: segment 0: paddr=00050020 vaddr=420d0020 size=1db1ch (121628) map[0m
+[0;32mI (168) esp_image: segment 1: paddr=0006db44 vaddr=4080d000 size=024d4h (  9428) load[0m
+[0;32mI (171) esp_image: segment 2: paddr=00070020 vaddr=42030020 size=9d618h (644632) map[0m
+[0;32mI (291) esp_image: segment 3: paddr=0010d640 vaddr=4080f4d4 size=15040h ( 86080) load[0m
+[0;32mI (309) esp_image: segment 4: paddr=00122688 vaddr=40824520 size=03600h ( 13824) load[0m
+[0;32mI (319) boot: Loaded app from partition at offset 0x50000[0m
+[0;32mI (319) boot: Disabling RNG early entropy source...[0m
+[0;32mI (328) boot: Current privilege level - 3[0m
+[0;32mI (329) boot: Starting TEE: Entry point - 0x40800f50[0m
+[0;32mI (329) esp_tee_secure_sys_cfg: Current privilege level - 3[0m
+[0;32mI (331) esp_tee_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (337) esp_tee_init: At 408076D0 len 00004930 (18 KiB): RAM[0m
+[0;33mW (354) secure_storage: TEE Secure Storage enabled in insecure DEVELOPMENT mode[0m
+[0;32mI (355) esp_tee_init: TEE information:[0m
+[0;32mI (356) esp_tee_init: Project name:     esp_tee[0m
+[0;32mI (358) esp_tee_init: App version:      1.0.0[0m
+[0;32mI (362) esp_tee_init: Compile time:     Mar 12 2026 09:26:53[0m
+[0;32mI (367) esp_tee_init: ELF file SHA256:  d20092ada...[0m
+[0;32mI (372) esp_tee_init: ESP-IDF:          v6.1-dev-2210-gf621cc4fff[0m
+[0;32mI (379) cpu_start: Unicore app[0m
+[0;32mI (392) cpu_start: GPIO 17 and 16 are used as console UART I/O pins[0m
+[0;32mI (393) cpu_start: Pro cpu start user code[0m
+[0;32mI (393) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (394) app_init: Application information:[0m
+[0;32mI (398) app_init: Project name:     tee_server_auth[0m
+[0;32mI (403) app_init: App version:      1[0m
+[0;32mI (406) app_init: Compile time:     Mar 12 2026 09:45:54[0m
+[0;32mI (411) app_init: ELF file SHA256:  97eae4143...[0m
+[0;32mI (415) app_init: ESP-IDF:          v6.1-dev-2210-gf621cc4fff[0m
+[0;32mI (421) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (425) efuse_init: Max chip rev:     v0.99 [0m
+[0;32mI (429) efuse_init: Chip rev:         v0.2[0m
+[0;32mI (433) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (439) heap_init: At 4082D0C0 len 0004F550 (317 KiB): RAM[0m
+[0;32mI (444) heap_init: At 4087C610 len 00002F54 (11 KiB): RAM[0m
+[0;32mI (449) heap_init: At 50000000 len 00003FE8 (15 KiB): RTCRAM[0m
+[0;32mI (455) spi_flash: detected chip: generic[0m
+[0;32mI (458) spi_flash: flash io: dio[0m
+[0;33mW (461) spi_flash: Detected size(8192k) larger than the size in the binary image header(2048k). Using the size in the binary image header.[0m
+[0;32mI (474) sleep_gpio: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (480) sleep_gpio: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (487) main_task: Started on CPU0[0m
+[0;32mI (487) main_task: Calling app_main()[0m
+[0;32mI (487) tee_server_auth: === ESP TEE Server Authentication Demo ===[0m
+[0;32mI (507) pp: pp rom version: 5b8dcfa[0m
+[0;32mI (507) net80211: net80211 rom version: 5b8dcfa[0m
+[0;32mI (517) wifi:wifi driver task: 40833264, prio:23, stack:6656, core=0[0m
+[0;32mI (517) wifi:wifi firmware version: c4743b9[0m
+[0;32mI (517) wifi:wifi certification version: v7.0[0m
+[0;32mI (517) wifi:config NVS flash: enabled[0m
+[0;32mI (517) wifi:config nano formatting: disabled[0m
+[0;32mI (527) wifi:mac_version:HAL_MAC_ESP32AX_761,ut_version:N, band mode:0x1[0m
+[0;32mI (537) wifi:Init data frame dynamic rx buffer num: 32[0m
+[0;32mI (537) wifi:Init static rx mgmt buffer num: 5[0m
+[0;32mI (537) wifi:Init management short buffer num: 32[0m
+[0;32mI (547) wifi:Init dynamic tx buffer num: 32[0m
+[0;32mI (547) wifi:Init static tx FG buffer num: 2[0m
+[0;32mI (557) wifi:Init static rx buffer size: 1700 (rxctrl:92, csi:512)[0m
+[0;32mI (557) wifi:Init static rx buffer num: 10[0m
+[0;32mI (567) wifi:Init dynamic rx buffer num: 32[0m
+[0;32mI (567) wifi_init: rx ba win: 6[0m
+[0;32mI (567) wifi_init: accept mbox: 6[0m
+[0;32mI (577) wifi_init: tcpip mbox: 32[0m
+[0;32mI (577) wifi_init: udp mbox: 6[0m
+[0;32mI (577) wifi_init: tcp mbox: 6[0m
+[0;32mI (577) wifi_init: tcp tx win: 5760[0m
+[0;32mI (587) wifi_init: tcp rx win: 5760[0m
+[0;32mI (587) wifi_init: tcp mss: 1440[0m
+[0;32mI (587) wifi_init: WiFi IRAM OP enabled[0m
+[0;32mI (597) wifi_init: WiFi RX IRAM OP enabled[0m
+[0;32mI (597) wifi_init: WiFi SLP IRAM OP enabled[0m
+[0;32mI (607) phy_init: phy_version 343,b513b46,Nov 14 2025,16:34:12[0m
+[0;33mW (667) wifi:ACK_TAB0   :0x   90a0b, QAM16:0x9 (24Mbps), QPSK:0xa (12Mbps), BPSK:0xb (6Mbps)[0m
+[0;33mW (667) wifi:CTS_TAB0   :0x   90a0b, QAM16:0x9 (24Mbps), QPSK:0xa (12Mbps), BPSK:0xb (6Mbps)[0m
+[0;33mW (677) wifi:(agc)0x600a7128:0xd21e8862, min.avgNF:0xce->0xd2(dB), RCalCount:0x1e8, min.RRssi:0x862(-121.88)[0m
+[0;32mI (687) wifi:11ax coex: WDEVAX_PTI0(0x000a00a0), WDEVAX_PTI1(0x0000a2bd).[0m
+
+[0;32mI (687) wifi:mode : sta (7c:2c:67:7c:51:bc)[0m
+[0;32mI (697) wifi:enable tsf[0m
+[0;32mI (707) wifi:(he)max.RxAMPDULenExponentExtension:2, max.RxAMPDUpre-EOFpaddingBytes:4194303(0x3fffff)[0m
+[0;32mI (707) wifi:(mac)omc_ul_mu_data_disable_rx:1[0m
+[0;32mI (707) wifi:(phy)ppe_thresholds_present:1, nominal_packet_padding:3[0m
+[0;32mI (717) wifi:(phy)dcm tx(constellation:0, nss:0), dcm rx(constellation:0, nss:0)[0m
+[0;32mI (727) wifi:(phy)rx_mcs_map:0xffaa, tx_mcs_map:0xffaa, stbc_tx:0, bfmer(su:1, mu:1), ldpc:1, max_rate:172[0m
+[0;32mI (737) wifi:(phy)nsts:4, ru_index_bitmap:0x3(242:1, 484:1, 996:0, 2*996:0)[0m
+[0;32mI (737) wifi:(phy)threshold_bits:48, nsts_num:4, ru_num:2, he_cap->len:29, ppe_threshold_len:7(6,11,4)[0m
+[0;32mI (747) wifi:(ppe)RU242, NSTS0, PPE16:0, PPE8:7, nominal_packet_padding:2[0m
+[0;32mI (757) wifi:(opr)len:8, TWT Required:0, VHT Opr Info Present:0, 6GHz Opr Info Present:0, Co-Hosted BSS:1(max_indicator:3), Basic MCS and NSS:0xfffc[0m
+[0;32mI (767) wifi:(opr)len:8, Default PE Duration:4, TXOP RTS Threshold:0(0 us), ER-SU-Disable:1[0m
+[0;32mI (777) wifi:(opr)len:8, BSS Color:35, disabled:0, Partial BSS Color:0[0m
+[0;32mI (787) wifi:new:<11,0>, old:<1,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (787) wifi:(connect)dot11_authmode:0x3, pairwise_cipher:0x3, group_cipher:0x3[0m
+[0;32mI (797) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (1797) wifi:state: auth -> init (0x200)[0m
+[0;32mI (1807) wifi:new:<11,0>, old:<11,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (1807) tee_server_auth: Retrying WiFi (1/5)[0m
+[0;32mI (4217) tee_server_auth: Retrying WiFi (2/5)[0m
+[0;32mI (4307) wifi:(he)max.RxAMPDULenExponentExtension:2, max.RxAMPDUpre-EOFpaddingBytes:4194303(0x3fffff)[0m
+[0;32mI (4307) wifi:(mac)omc_ul_mu_data_disable_rx:1[0m
+[0;32mI (4317) wifi:(phy)ppe_thresholds_present:1, nominal_packet_padding:3[0m
+[0;32mI (4317) wifi:(phy)dcm tx(constellation:0, nss:0), dcm rx(constellation:0, nss:0)[0m
+[0;32mI (4327) wifi:(phy)rx_mcs_map:0xffaa, tx_mcs_map:0xffaa, stbc_tx:0, bfmer(su:1, mu:1), ldpc:1, max_rate:172[0m
+[0;32mI (4337) wifi:(phy)nsts:4, ru_index_bitmap:0x3(242:1, 484:1, 996:0, 2*996:0)[0m
+[0;32mI (4347) wifi:(phy)threshold_bits:48, nsts_num:4, ru_num:2, he_cap->len:29, ppe_threshold_len:7(6,11,4)[0m
+[0;32mI (4347) wifi:(ppe)RU242, NSTS0, PPE16:0, PPE8:7, nominal_packet_padding:2[0m
+[0;32mI (4357) wifi:(opr)len:8, TWT Required:0, VHT Opr Info Present:0, 6GHz Opr Info Present:0, Co-Hosted BSS:1(max_indicator:3), Basic MCS and NSS:0xfffc[0m
+[0;32mI (4367) wifi:(opr)len:8, Default PE Duration:4, TXOP RTS Threshold:0(0 us), ER-SU-Disable:1[0m
+[0;32mI (4377) wifi:(opr)len:8, BSS Color:35, disabled:0, Partial BSS Color:0[0m
+[0;32mI (4387) wifi:new:<11,0>, old:<11,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (4397) wifi:(connect)dot11_authmode:0x3, pairwise_cipher:0x3, group_cipher:0x3[0m
+[0;32mI (4397) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (4427) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (4437) wifi:(assoc)RESP, Extended Capabilities length:11, operating_mode_notification:0[0m
+[0;32mI (4437) wifi:(assoc)RESP, Extended Capabilities, MBSSID:0, TWT Responder:0, OBSS Narrow Bandwidth RU In OFDMA Tolerance:0[0m
+[0;32mI (4447) wifi:Extended Capabilities length:11, operating_mode_notification:1[0m
+[0;32mI (4457) wifi:(he)max.RxAMPDULenExponentExtension:2, max.RxAMPDUpre-EOFpaddingBytes:4194303(0x3fffff)[0m
+[0;32mI (4467) wifi:(mac)omc_ul_mu_data_disable_rx:1[0m
+[0;32mI (4467) wifi:(phy)ppe_thresholds_present:1, nominal_packet_padding:3[0m
+[0;32mI (4477) wifi:(phy)dcm tx(constellation:0, nss:0), dcm rx(constellation:0, nss:0)[0m
+[0;32mI (4477) wifi:(phy)rx_mcs_map:0xffaa, tx_mcs_map:0xffaa, stbc_tx:0, bfmer(su:1, mu:1), ldpc:1, max_rate:172[0m
+[0;32mI (4487) wifi:(phy)nsts:4, ru_index_bitmap:0x3(242:1, 484:1, 996:0, 2*996:0)[0m
+[0;32mI (4497) wifi:(phy)threshold_bits:48, nsts_num:4, ru_num:2, he_cap->len:29, ppe_threshold_len:7(6,11,4)[0m
+[0;32mI (4507) wifi:(ppe)RU242, NSTS0, PPE16:0, PPE8:7, nominal_packet_padding:2[0m
+[0;32mI (4517) wifi:(opr)len:8, TWT Required:0, VHT Opr Info Present:0, 6GHz Opr Info Present:0, Co-Hosted BSS:1(max_indicator:3), Basic MCS and NSS:0xfffc[0m
+[0;32mI (4527) wifi:(opr)len:8, Default PE Duration:4, TXOP RTS Threshold:0(0 us), ER-SU-Disable:1[0m
+[0;32mI (4537) wifi:(opr)len:8, BSS Color:35, disabled:0, Partial BSS Color:0[0m
+[0;32mI (4537) wifi:state: assoc -> run (0x10)[0m
+[0;32mI (4547) wifi:(he)ppe_thresholds_present:1, nominal_packet_padding(rx:3, cfg:2)[0m
+[0;32mI (4547) wifi:(trc)phytype:CBW20-SGI, snr:47, maxRate:172, highestRateIdx:0[0m
+[0;33mW (4557) wifi:(trc)band:2G, phymode:3, highestRateIdx:0, lowestRateIdx:11, dataSchedTableSize:14[0m
+[0;32mI (4567) wifi:(trc)band:2G, rate(S-MCS7, rateIdx:0), ampdu(rate:S-MCS7, schedIdx(0, stop:8)), snr:47, ampduState:wait operational[0m
+[0;32mI (4577) wifi:ifidx:0, rssi:-48, nf:-95, phytype(0x3, CBW20-SGI), phymode(0x7, 11ax), max_rate:172, he:1, vht:0, ht:1[0m
+[0;32mI (4587) wifi:(ht)max.RxAMPDULenExponent:3(65535 bytes), MMSS:5(4 us)[0m
+[0;32mI (4637) wifi:(extcap)mbssid:0, enhanced_mbssid_advertise:0, complete_nontxbssid_profiles:0, twt_responder: 1[0m
+[0;32mI (4637) wifi:connected with Rogers 1505, aid = 16, channel 11, BW20, bssid = 4a:bd:ce:49:43:fd[0m
+[0;32mI (4637) wifi:security: WPA2-PSK, phy:ax, rssi:-48, cipher(pairwise:0x3, group:0x3), pmf:0, [0m
+[0;32mI (4647) wifi:pm start, type: 1, twt_start:0[0m
+
+[0;32mI (4657) wifi:pm start, type:1, aid:0x10, trans-BSSID:4a:bd:ce:49:43:fd, BSSID[5]:0xfd, mbssid(max-indicator:0, index:0), he:1[0m
+[0;32mI (4667) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us[0m
+[0;32mI (4677) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 25000, mt_pti: 0, mt_time: 10000[0m
+[0;32mI (4677) wifi:[ADDBA]TX addba request, tid:0, dialogtoken:1, bufsize:32, A-MSDU:0(not supported), policy:1(IMR), ssn:0(0x0)[0m
+[0;32mI (4687) wifi:[ADDBA]TX addba request, tid:7, dialogtoken:2, bufsize:32, A-MSDU:0(not supported), policy:1(IMR), ssn:0(0x20)[0m
+[0;32mI (4707) wifi:[ADDBA]TX addba request, tid:5, dialogtoken:3, bufsize:32, A-MSDU:0(not supported), policy:1(IMR), ssn:0(0x0)[0m
+[0;32mI (4727) wifi:[ADDBA]RX addba response, status:0, tid:0/tb:1(0xa1), bufsize:32, batimeout:0, txa_wnd:32[0m
+[0;32mI (4747) wifi:[ADDBA]RX addba response, status:0, tid:7/tb:1(0xa1), bufsize:32, batimeout:0, txa_wnd:32[0m
+[0;32mI (4747) wifi:[ADDBA]RX addba response, status:0, tid:5/tb:1(0xa1), bufsize:32, batimeout:0, txa_wnd:32[0m
+[0;32mI (4747) wifi:[ADDBA]RX addba response, status:0, tid:7/tb:1(0xa1), bufsize:32, batimeout:0, txa_wnd:32[0m
+[0;33mW (4757) wifi:<ba-add>idx:0, ifx:0, tid:7, TAHI:0x100fd43, TALO:0x49cebd4a, (ssn:3, win:64, cur_ssn:3), CONF:0xc0007005[0m
+[0;32mI (4767) wifi:[ADDBA]RX addba response, status:0, tid:5/tb:1(0xa1), bufsize:32, batimeout:0, txa_wnd:32[0m
+[0;32mI (4837) wifi:AP's beacon interval = 102400 us, DTIM period = 1[0m
+[0;32mI (5807) esp_netif_handlers: sta ip: 10.0.0.234, mask: 255.255.255.0, gw: 10.0.0.1[0m
+[0;32mI (5807) tee_server_auth: Got IP: 10.0.0.234[0m
+[0;32mI (5807) tee_server_auth: Connected to WiFi[0m
+[0;32mI (5807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (5807) tee_server_auth: TCP server listening on port 3333[0m
+[0;32mI (5817) main_task: Returned from app_main()[0m
+[0;33mW (9987) wifi:<ba-add>idx:1, ifx:0, tid:0, TAHI:0x100fd43, TALO:0x49cebd4a, (ssn:1, win:64, cur_ssn:1), CONF:0xc0000005[0m
+[0;32mI (10807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (15807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (20807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (25807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (26327) tee_server_auth: Connection from 10.0.0.186[0m
+[0;32mI (26347) tee_server_auth: Issued challenge nonce[0m
+[0;32mI (26437) tee_server_auth: Connection from 10.0.0.186[0m
+[0;33mW (26457) tee_server_auth: Unknown command: 0x02[0m
+[0;32mI (30807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (33657) tee_server_auth: Connection from 10.0.0.186[0m
+[0;32mI (33667) tee_server_auth: Issued challenge nonce[0m
+[0;32mI (33697) tee_server_auth: Connection from 10.0.0.186[0m
+[0;33mW (33727) tee_server_auth: Unknown command: 0x03[0m
+[0;32mI (35807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (40807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (45807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (50807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (55807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (60807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (65807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (70807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (74207) tee_server_auth: Connection from 10.0.0.186[0m
+[0;32mI (74217) tee_server_auth: Issued challenge nonce[0m
+[0;32mI (74237) tee_server_auth: Connection from 10.0.0.186[0m
+[0;32mI (1753) server_auth: Secure service call: server signature verify in M-mode[0m
+[0;32mI (1806) server_auth: Server signature VALID[0m
+[0;32mI (74297) tee_server_auth: Server expects LED: ON | Actual LED: OFF[0m
+[0;33mW (74297) tee_server_auth: STATUS MISMATCH[0m
+[0;32mI (75807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (77977) tee_server_auth: Connection from 10.0.0.186[0m
+[0;32mI (77977) tee_server_auth: Issued challenge nonce[0m
+[0;32mI (78087) tee_server_auth: Connection from 10.0.0.186[0m
+[0;32mI (1850) server_auth: Secure service call: server signature verify in M-mode[0m
+[0;32mI (1903) server_auth: Server signature VALID[0m
+[0;32mI (78147) tee_server_auth: Server expects LED: ON | Actual LED: ON[0m
+[0;32mI (78147) tee_server_auth: STATUS MATCH[0m
+[0;32mI (80807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (82067) tee_server_auth: Connection from 10.0.0.186[0m
+[0;32mI (82077) tee_server_auth: Issued challenge nonce[0m
+[0;32mI (82137) tee_server_auth: Connection from 10.0.0.186[0m
+[0;32mI (1947) server_auth: Secure service call: server signature verify in M-mode[0m
+[0;32mI (2000) server_auth: Server signature VALID[0m
+[0;32mI (82187) tee_server_auth: Server expects LED: ON | Actual LED: OFF[0m
+[0;33mW (82187) tee_server_auth: STATUS MISMATCH[0m
+[0;32mI (85807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (90807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (95807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (100807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (105807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (110807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (115807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (120807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (125807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (130807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (135807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (140807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (145807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (150807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (155807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (160807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (165807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (170807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (175807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (180807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (185807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (190807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (195807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (200807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (205807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (210807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (215807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (220807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (225807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (230807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (235807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (240807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (245807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (250807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (255807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (260807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (265807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (270807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (275807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (280807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (285807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (290807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (295807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (300807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (305807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (310807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (315807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (320807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (325807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (330807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (335807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (340807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (345807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (350807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (355807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (360807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (365807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (370807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (375807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (380807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (385807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (390807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (395807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (400807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (405807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (410807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (415807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (420807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (425807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (430807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (435807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (440807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (445807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (450807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (455807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (460807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (465807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (470807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (475807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (480807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (485807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (490807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (495807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (500807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (505807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (510807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (515807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (520807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (525807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (530807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (535807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (540807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (545807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (550807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (555807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (560807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (565807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (570807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (575807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (580807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (585807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (590807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (595807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (600807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (605807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (610807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (615807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (620807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (625807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (630807) tee_server_auth: LED toggled -> OFF[0m
+[0;32mI (635807) tee_server_auth: LED toggled -> ON[0m
+[0;32mI (640807) tee_server_auth: LED toggled -> OFF[0m
+[0;32

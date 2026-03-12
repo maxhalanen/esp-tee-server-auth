@@ -1,0 +1,13 @@
+Command: ninja all
+[0/7] Performing build step for 'esp_tee'
+ninja: no work to do.
+[2/7] cd /home/max/esp/tee_server_auth/build && /home/max/.espressif/python_env/idf6.1_py3.12_env/bin/python /home/max/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/max/esp/tee_server_auth/build/partition_table/partition-table.bin /home/max/esp/tee_server_auth/build/tee_server_auth.bin
+Warning: 1/2 app partitions are too small for binary tee_server_auth.bin size 0xd5fe0:
+  - Part 'tee' 0/48 @ 0x10000 size 0x30000 (overflow 0xa5fe0)
+[3/7] No install step for 'esp_tee'
+[4/7] Performing build step for 'bootloader'
+[1/1] cd /home/max/esp/tee_server_auth/build/bootloader && /home/max/.espressif/python_env/idf6.1_py3.12_env/bin/python /home/max/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /home/max/esp/tee_server_auth/build/bootloader/bootloader.bin
+Bootloader binary size 0x6070 bytes. 0x1f90 bytes (25%) free.
+[5/7] Completed 'esp_tee'
+[6/7] No install step for 'bootloader'
+[7/7] Completed 'bootloader'

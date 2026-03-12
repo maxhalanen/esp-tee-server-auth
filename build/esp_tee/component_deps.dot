@@ -1,0 +1,100 @@
+digraph G {
+
+"common" -> "esp_common";
+"esp_hw_support" -> "esp_hal_gpio" [class="requires"];
+"common" -> "soc";
+"spi_flash" -> "esp_hal_mspi" [class="requires"];
+"common" -> "hal";
+"esp_hal_mspi" -> "esp_hal_gpspi" [class="requires"];
+"esp_hal_gpspi" -> "esp_hal_dma" [class="requires"];
+"common" -> "esp_hw_support";
+"common" -> "esp_rom";
+"common" -> "freertos";
+"common" -> "log";
+"common" -> "esp_libc";
+"common" -> "spi_flash";
+"common" -> "riscv";
+"esp_hal_gpspi" -> "esp_hal_gpio" [class="priv_requires" style="dotted"];
+"esp_hal_mspi" -> "esp_hal_clock" [class="requires"];
+"esp_hal_mspi" -> "esp_hal_gpio" [class="priv_requires" style="dotted"];
+"spi_flash" -> "esp_blockdev" [class="requires"];
+"spi_flash" -> "bootloader_support" [class="priv_requires" style="dotted"];
+"bootloader_support" -> "efuse" [class="priv_requires" style="dotted"];
+"efuse" -> "bootloader_support" [class="priv_requires" style="dotted"];
+"efuse" -> "esp_hal_security" [class="priv_requires" style="dotted"];
+"bootloader_support" -> "esp_app_format" [class="priv_requires" style="dotted"];
+"bootloader_support" -> "esptool_py" [class="priv_requires" style="dotted"];
+"bootloader_support" -> "esp_hal_security" [class="priv_requires" style="dotted"];
+"spi_flash" -> "esp_hal_gpio" [class="priv_requires" style="dotted"];
+"esp_rom" -> "esp_hal_uart" [class="priv_requires" style="dotted"];
+"esp_hw_support" -> "esp_hal_usb" [class="requires"];
+"esp_hw_support" -> "esp_hal_pmu" [class="requires"];
+"esp_hw_support" -> "efuse" [class="priv_requires" style="dotted"];
+"esp_hw_support" -> "bootloader_support" [class="priv_requires" style="dotted"];
+"esp_hw_support" -> "esp_hal_wdt" [class="priv_requires" style="dotted"];
+"esp_hal_wdt" -> "esp_hal_timg" [class="requires"];
+"esp_hw_support" -> "esp_hal_rtc_timer" [class="priv_requires" style="dotted"];
+"esp_hw_support" -> "esp_hal_clock" [class="priv_requires" style="dotted"];
+"esp_hw_support" -> "esp_hal_security" [class="priv_requires" style="dotted"];
+"esp_hw_support" -> "esp_system" [class="priv_requires" style="dotted"];
+"bootloader" -> "partition_table" [class="priv_requires" style="dotted"];
+"partition_table" -> "esptool_py" [class="priv_requires" style="dotted"];
+"bootloader" -> "esptool_py" [class="priv_requires" style="dotted"];
+"esp_security" -> "esp_hal_security" [class="requires"];
+"esp_security" -> "efuse" [class="priv_requires" style="dotted"];
+"mbedtls" -> "esp_hal_security" [class="priv_requires" style="dotted"];
+"mbedtls" -> "esp_hal_dma" [class="priv_requires" style="dotted"];
+"main" -> "espressif__json_generator" [class="priv_requires" style="dotted"];
+"server_auth_service" -> "main" [class="priv_requires" style="dotted"];
+"attestation" -> "bootloader_support" [class="priv_requires" style="dotted"];
+"attestation" -> "efuse" [class="priv_requires" style="dotted"];
+"attestation" -> "esp_app_format" [class="priv_requires" style="dotted"];
+"attestation" -> "esp_bootloader_format" [class="priv_requires" style="dotted"];
+"attestation" -> "espressif__json_generator" [class="priv_requires" style="dotted"];
+"attestation" -> "mbedtls" [class="priv_requires" style="dotted"];
+"attestation" -> "tee_sec_storage" [class="priv_requires" style="dotted"];
+"tee_sec_storage" -> "esp_tee" [class="priv_requires" style="dotted"];
+"tee_sec_storage" -> "efuse" [class="priv_requires" style="dotted"];
+"tee_sec_storage" -> "esp_partition" [class="priv_requires" style="dotted"];
+"esp_partition" -> "esp_blockdev" [class="requires"];
+"esp_partition" -> "tee_flash_mgr" [class="priv_requires" style="dotted"];
+"tee_flash_mgr" -> "bootloader_support" [class="requires"];
+"tee_flash_mgr" -> "esp_tee" [class="priv_requires" style="dotted"];
+"tee_sec_storage" -> "esp_security" [class="priv_requires" style="dotted"];
+"tee_sec_storage" -> "mbedtls" [class="priv_requires" style="dotted"];
+"tee_sec_storage" -> "nvs_flash" [class="priv_requires" style="dotted"];
+"nvs_flash" -> "esp_partition" [class="requires"];
+"nvs_flash" -> "esp_blockdev" [class="requires"];
+"nvs_flash" -> "mbedtls" [class="requires"];
+"nvs_flash" -> "cxx" [class="priv_requires" style="dotted"];
+"tee_sec_storage" -> "tee_flash_mgr" [class="priv_requires" style="dotted"];
+"attestation" -> "tee_flash_mgr" [class="priv_requires" style="dotted"];
+"tee_ota_ops" -> "esp_tee" [class="priv_requires" style="dotted"];
+"tee_ota_ops" -> "bootloader_support" [class="priv_requires" style="dotted"];
+"tee_ota_ops" -> "tee_flash_mgr" [class="priv_requires" style="dotted"]
+
+subgraph cluster_g0 {
+    rank = same;
+    label = "G0";
+
+    soc;
+    hal;
+    esp_common;
+    esp_rom;
+    riscv;
+}
+
+subgraph cluster_g1 {
+    rank = same;
+    label = "G1";
+
+    spi_flash;
+    freertos;
+    log;
+    heap;
+    esp_libc;
+    esp_system;
+    esp_hw_support;
+}
+
+}

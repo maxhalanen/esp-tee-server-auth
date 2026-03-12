@@ -1,0 +1,2 @@
+source /home/max/esp/tee_server_auth/build/gdbinit/symbols
+source /home/max/esp/tee_server_auth/build/gdbinit/connect

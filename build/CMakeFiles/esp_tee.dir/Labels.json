@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/CMakeFiles/esp_tee"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/CMakeFiles/esp_tee.rule"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/CMakeFiles/esp_tee-complete.rule"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/esp_tee-prefix/src/esp_tee-stamp/esp_tee-build.rule"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/esp_tee-prefix/src/esp_tee-stamp/esp_tee-configure.rule"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/esp_tee-prefix/src/esp_tee-stamp/esp_tee-download.rule"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/esp_tee-prefix/src/esp_tee-stamp/esp_tee-install.rule"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/esp_tee-prefix/src/esp_tee-stamp/esp_tee-mkdir.rule"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/esp_tee-prefix/src/esp_tee-stamp/esp_tee-patch.rule"
+		},
+		{
+			"file" : "/home/max/esp/tee_server_auth/build/esp_tee-prefix/src/esp_tee-stamp/esp_tee-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"esp_tee"
+		],
+		"name" : "esp_tee"
+	}
+}

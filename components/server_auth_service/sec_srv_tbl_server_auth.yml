@@ -1,0 +1,7 @@
+secure_services:
+  - family: server_auth
+    entries:
+      - id: 200
+        type: custom
+        function: server_auth_verify_cmd
+        args: 3

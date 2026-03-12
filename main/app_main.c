@@ -1,0 +1,354 @@
+/*
+ * ESP TEE Server Authentication Demo
+ *
+ * The device runs a TCP server. Before executing any command it issues a
+ * challenge: a fresh 32-byte random nonce sent to the connecting server.
+ * The server must sign SHA-256(nonce || command_byte) with its ECDSA-P256
+ * private key. The device verifies the signature inside the TEE using the
+ * server's public key, which is hardcoded in M-mode and never exposed to
+ * the REE. An attacker controlling the REE cannot substitute a different key.
+ *
+ * The device auto-blinks an LED. The server signs an expected LED state and
+ * sends it; the device verifies the signature inside the TEE then compares
+ * the expected state against the actual GPIO level.
+ *
+ * Protocol (one connection per exchange):
+ *   CMD_GET_CHALLENGE (0x00) — device responds with 32-byte random nonce
+ *   CMD_CHECK_STATUS  (0x01) — server sends signed expected state:
+ *                              [0x01][1B expected][32B nonce][64B sig]
+ *                              sig covers SHA-256(nonce || expected_state)
+ *                              device responds: MATCH or MISMATCH
+ *
+ * The nonce is single-use: accepted once then invalidated to prevent replay.
+ *
+ * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+ * SPDX-License-Identifier: Unlicense OR CC0-1.0
+ */
+#include <string.h>
+#include <stdatomic.h>
+#include <sys/param.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
+#include "esp_system.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_log.h"
+#include "esp_netif.h"
+#include "esp_random.h"
+#include "nvs_flash.h"
+#include "driver/gpio.h"
+
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include <lwip/netdb.h>
+
+#include "psa/crypto.h"
+#include "esp_tee.h"
+#include "secure_service_num.h"
+#include "server_auth_service.h"
+#include "sdkconfig.h"
+
+/* -------------------------------------------------------------------------- */
+/*  Configuration                                                              */
+/* -------------------------------------------------------------------------- */
+#define LED_GPIO        CONFIG_EXAMPLE_LED_GPIO
+#define TCP_PORT        CONFIG_EXAMPLE_TCP_PORT
+#define WIFI_SSID       CONFIG_EXAMPLE_WIFI_SSID
+#define WIFI_PASS       CONFIG_EXAMPLE_WIFI_PASSWORD
+#define WIFI_MAX_RETRY  CONFIG_EXAMPLE_WIFI_MAXIMUM_RETRY
+
+#define CMD_GET_CHALLENGE  0x00
+#define CMD_CHECK_STATUS   0x01
+
+#define NONCE_LEN       32
+#define BLINK_PERIOD_MS CONFIG_EXAMPLE_BLINK_PERIOD_MS
+
+static const char *TAG = "tee_server_auth";
+
+/* -------------------------------------------------------------------------- */
+/*  Pending nonce — one outstanding challenge at a time                        */
+/* -------------------------------------------------------------------------- */
+static uint8_t  s_pending_nonce[NONCE_LEN];
+static bool     s_nonce_valid = false;
+
+/* -------------------------------------------------------------------------- */
+/*  LED state                                                                  */
+/* -------------------------------------------------------------------------- */
+static atomic_int s_led_state = 0;
+
+/* -------------------------------------------------------------------------- */
+/*  WiFi                                                                       */
+/* -------------------------------------------------------------------------- */
+static EventGroupHandle_t s_wifi_event_group;
+#define WIFI_CONNECTED_BIT BIT0
+#define WIFI_FAIL_BIT      BIT1
+static int s_retry_num = 0;
+
+static void wifi_event_handler(void *arg, esp_event_base_t event_base,
+                               int32_t event_id, void *event_data)
+{
+    if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+        esp_wifi_connect();
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        if (s_retry_num < WIFI_MAX_RETRY) {
+            esp_wifi_connect();
+            s_retry_num++;
+            ESP_LOGI(TAG, "Retrying WiFi (%d/%d)", s_retry_num, WIFI_MAX_RETRY);
+        } else {
+            xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+        }
+    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
+        ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        s_retry_num = 0;
+        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+    }
+}
+
+static void wifi_init_sta(void)
+{
+    s_wifi_event_group = xEventGroupCreate();
+
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    esp_netif_create_default_wifi_sta();
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+    esp_event_handler_instance_t instance_any_id;
+    esp_event_handler_instance_t instance_got_ip;
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+                                                        &wifi_event_handler, NULL, &instance_any_id));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+                                                        &wifi_event_handler, NULL, &instance_got_ip));
+
+    wifi_config_t wifi_config = {
+        .sta = {
+            .ssid = WIFI_SSID,
+            .password = WIFI_PASS,
+            .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+        },
+    };
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
+                                           WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+                                           pdFALSE, pdFALSE, portMAX_DELAY);
+    if (bits & WIFI_CONNECTED_BIT) {
+        ESP_LOGI(TAG, "Connected to WiFi");
+    } else {
+        ESP_LOGE(TAG, "Failed to connect to WiFi");
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  LED blink task                                                             */
+/* -------------------------------------------------------------------------- */
+static void led_blink_task(void *pvParameters)
+{
+    while (1) {
+        int state = atomic_load(&s_led_state);
+        state = !state;
+        atomic_store(&s_led_state, state);
+        gpio_set_level(LED_GPIO, state);
+        ESP_LOGI(TAG, "LED toggled -> %s", state ? "ON" : "OFF");
+        vTaskDelay(pdMS_TO_TICKS(BLINK_PERIOD_MS));
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Verify a signed status check in the TEE                                   */
+/*                                                                             */
+/*  Signed message = SHA-256(nonce || expected_state)                         */
+/*  Verification uses the server pubkey hardcoded in M-mode.                  */
+/* -------------------------------------------------------------------------- */
+static bool verify_signed_command(uint8_t expected_state, const uint8_t *nonce,
+                                  const server_auth_sig_t *sig)
+{
+    /* Build the message: nonce || expected_state */
+    uint8_t msg[NONCE_LEN + 1];
+    memcpy(msg, nonce, NONCE_LEN);
+    msg[NONCE_LEN] = expected_state;
+
+    /* Hash in the REE — the message content is not secret */
+    uint8_t hash[SERVER_AUTH_HASH_LEN];
+    size_t hash_len = 0;
+    psa_hash_compute(PSA_ALG_SHA_256, msg, sizeof(msg),
+                     hash, sizeof(hash), &hash_len);
+
+    /* Verify inside the TEE — server pubkey never leaves M-mode */
+    int valid = 0;
+    uint32_t ret = esp_tee_service_call_with_noniram_intr_disabled(
+        4, SS_SERVER_AUTH_VERIFY_CMD, hash, sig, &valid);
+
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "TEE service call failed: 0x%lx", (unsigned long)ret);
+        return false;
+    }
+
+    return (valid == 1);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Handle a single TCP client connection                                      */
+/* -------------------------------------------------------------------------- */
+static void handle_client(int sock)
+{
+    /* Largest packet: CMD_CHECK_STATUS = [cmd][expected][nonce][sig] */
+    uint8_t rx_buf[1 + 1 + NONCE_LEN + SERVER_AUTH_SIG_LEN];
+
+    int len = recv(sock, rx_buf, sizeof(rx_buf), 0);
+    if (len <= 0) {
+        ESP_LOGW(TAG, "No data from client");
+        return;
+    }
+
+    uint8_t cmd = rx_buf[0];
+
+    if (cmd == CMD_GET_CHALLENGE) {
+        /* Generate a fresh nonce and send it — invalidate any previous one */
+        esp_fill_random(s_pending_nonce, NONCE_LEN);
+        s_nonce_valid = true;
+        send(sock, s_pending_nonce, NONCE_LEN, 0);
+        ESP_LOGI(TAG, "Issued challenge nonce");
+        return;
+    }
+
+    if (cmd == CMD_CHECK_STATUS) {
+        /* Packet: [0x01][1B expected_state][32B nonce][64B sig] */
+        if (len < 1 + 1 + NONCE_LEN + SERVER_AUTH_SIG_LEN) {
+            ESP_LOGW(TAG, "CHECK_STATUS packet too short (%d bytes)", len);
+            send(sock, "ERROR: too short\n", 17, 0);
+            return;
+        }
+
+        if (!s_nonce_valid) {
+            ESP_LOGW(TAG, "No pending challenge — request one first");
+            send(sock, "ERROR: no challenge\n", 20, 0);
+            return;
+        }
+
+        uint8_t expected_state = rx_buf[1];
+        const uint8_t *nonce   = &rx_buf[2];
+
+        if (memcmp(nonce, s_pending_nonce, NONCE_LEN) != 0) {
+            ESP_LOGW(TAG, "Nonce mismatch — possible replay");
+            s_nonce_valid = false;
+            send(sock, "ERROR: nonce mismatch\n", 22, 0);
+            return;
+        }
+
+        /* Consume nonce immediately */
+        s_nonce_valid = false;
+
+        server_auth_sig_t sig;
+        memcpy(sig.rs, &rx_buf[2 + NONCE_LEN], SERVER_AUTH_SIG_LEN);
+
+        if (!verify_signed_command(expected_state, nonce, &sig)) {
+            ESP_LOGW(TAG, "CHECK_STATUS REJECTED — invalid server signature");
+            send(sock, "ERROR: auth failed\n", 19, 0);
+            return;
+        }
+
+        /* Signature valid — compare expected vs actual LED state */
+        int actual = atomic_load(&s_led_state);
+        ESP_LOGI(TAG, "Server expects LED: %s | Actual LED: %s",
+                 expected_state ? "ON" : "OFF",
+                 actual         ? "ON" : "OFF");
+
+        if ((expected_state != 0) == (actual != 0)) {
+            ESP_LOGI(TAG, "STATUS MATCH");
+            send(sock, "MATCH\n", 6, 0);
+        } else {
+            ESP_LOGW(TAG, "STATUS MISMATCH");
+            send(sock, "MISMATCH\n", 9, 0);
+        }
+        return;
+    }
+
+    ESP_LOGW(TAG, "Unknown command: 0x%02x", cmd);
+    send(sock, "ERROR: unknown cmd\n", 19, 0);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  TCP server task                                                            */
+/* -------------------------------------------------------------------------- */
+static void tcp_server_task(void *pvParameters)
+{
+    char addr_str[INET_ADDRSTRLEN];
+
+    struct sockaddr_in dest_addr = {
+        .sin_addr.s_addr = htonl(INADDR_ANY),
+        .sin_family      = AF_INET,
+        .sin_port        = htons(TCP_PORT),
+    };
+
+    int listen_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if (listen_sock < 0) {
+        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        vTaskDelete(NULL);
+        return;
+    }
+
+    int opt = 1;
+    setsockopt(listen_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    bind(listen_sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    listen(listen_sock, 1);
+
+    ESP_LOGI(TAG, "TCP server listening on port %d", TCP_PORT);
+
+    while (1) {
+        struct sockaddr_in source_addr;
+        socklen_t addr_len = sizeof(source_addr);
+        int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
+        if (sock < 0) {
+            ESP_LOGE(TAG, "Accept failed: errno %d", errno);
+            break;
+        }
+
+        inet_ntoa_r(source_addr.sin_addr, addr_str, sizeof(addr_str));
+        ESP_LOGI(TAG, "Connection from %s", addr_str);
+
+        handle_client(sock);
+
+        shutdown(sock, 0);
+        close(sock);
+    }
+
+    close(listen_sock);
+    vTaskDelete(NULL);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  app_main                                                                   */
+/* -------------------------------------------------------------------------- */
+void app_main(void)
+{
+    ESP_LOGI(TAG, "=== ESP TEE Server Authentication Demo ===");
+
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ret = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(ret);
+
+    /* PSA crypto needed for SHA-256 hashing in the REE */
+    psa_crypto_init();
+
+    /* Set up LED GPIO */
+    gpio_reset_pin(LED_GPIO);
+    gpio_set_direction(LED_GPIO, GPIO_MODE_INPUT_OUTPUT);
+    gpio_set_level(LED_GPIO, 0);
+
+    wifi_init_sta();
+
+    xTaskCreate(led_blink_task,  "led_blink",  2048, NULL, 5, NULL);
+    xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+}
